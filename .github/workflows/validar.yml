@@ -1,0 +1,24 @@
+name: Validar codigo
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter codigo
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validar sintaxe Python
+        run: python -m py_compile app.py
+      - name: Configurar Node para checagem de JS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar sintaxe JavaScript
+        run: node --check app.js

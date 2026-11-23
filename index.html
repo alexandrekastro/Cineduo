@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#121218">
+  <meta name="description" content="CineDuo: nosso ranking pessoal de filmes e séries, com capas, notas e comentários.">
+  <title>CineDuo — Nosso ranking de filmes e séries</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css?v=1.11">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand" aria-label="CineDuo">
+      <div class="brand-mark"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" aria-hidden="true"><rect x="4" y="8" width="24" height="17" rx="4" stroke="currentColor" stroke-width="2"/><path d="M11 4v5m10-5v5M5 14h23M11 15v9m10-9v9" stroke="currentColor" stroke-width="2"/><path d="m14 15 7 5-7 4v-9Z" fill="currentColor"/></svg></div>
+      <span>CINE<span class="brand-accent">DUO</span></span>
+    </div>
+    <div class="top-actions">
+      <span class="small-tag">NOSSO CINEMA PARTICULAR</span>
+      <button class="btn subtle settings-activate" title="Configurações e backup" type="button">⚙ <span class="hide-small">Ajustes</span></button>
+      <button class="btn primary add-activate" type="button">＋ <span>Adicionar título</span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div class="eyebrow"><span class="live-dot"></span> NOSSA HISTÓRIA EM FILMES</div>
+      <h1>Os filmes que <em>vivemos juntos.</em></h1>
+      <div class="stats" aria-label="Estatísticas do nosso ranking">
+        <div class="stat"><strong id="stat-total">—</strong><span id="stat-total-label">títulos no ranking</span></div>
+        <div class="stat"><strong id="stat-avg">—</strong><span>nossa nota média</span></div>
+        <div class="stat"><strong id="stat-ten">—</strong><span>nota 10 <span aria-hidden="true">★</span></span></div>
+        
+      </div>
+    </section>
+
+    <section class="library" aria-labelledby="library-title">
+      <div class="section-top">
+        <div>
+          <div class="eyebrow minor">COLEÇÃO PARTICULAR</div>
+          <h2 id="library-title">Nosso ranking <span id="current-count" class="count-label"></span></h2>
+        </div>
+        <button type="button" class="btn ghost" id="refresh-all" title="Corrigir identificação e consultar todas as capas e notas disponíveis">↻ Atualizar notas e capas</button>
+      </div>
+      <div id="sync-progress" class="progress hidden" aria-live="polite"><div class="progress-rail"><div id="progress-fill"></div></div><span id="progress-text"></span><div id="sync-details" style="margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere"></div></div>
+      <div class="toolbar">
+        <label class="search-box" for="library-search"><span class="search-symbol">⌕</span>
+          <input id="library-search" placeholder="Buscar filme ou série no ranking..." autocomplete="off">
+          <span class="shortcut">⌕</span>
+        </label>
+        <div class="tool-groups">
+          <button class="pill-switch active" id="tiers-view" type="button">▦ Por notas</button>
+          <button class="pill-switch" id="grid-view" type="button" title="Ranking completo em ordem, do 1º até o último">≡ Ranking geral</button>
+          <button class="pill-switch" id="actors-view" type="button" title="Veja quem mais apareceu nos filmes assistidos">♙ Ranking de artistas</button>
+          <button class="pill-switch" id="sagas-view" type="button" title="Franquias, trilogias e filmes que ainda faltam cadastrar">▣ Sagas e trilogias</button>
+          <select class="select sort-select" id="sort-select" aria-label="Ordenar filmes">
+            <option value="manual">Minha ordem</option>
+            <option value="title">Título (A–Z)</option>
+            <option value="imdb">Maior IMDb</option>
+            <option value="critics">Maior crítica</option>
+            <option value="year">Mais recentes</option>
+          </select>
+          <button class="small-toggle" id="toggle-empty" title="Mostrar ou ocultar notas vazias" type="button">Mostrar todas as notas</button>
+        </div>
+      </div>
+      <div id="actors-options" class="actors-options hidden"><label><input type="checkbox" id="actors-include-series"> Incluir séries no ranking dos artistas</label><button id="enrich-actors" type="button" class="btn outline actor-refresh">↻ Completar elencos</button><small id="actors-source-status" class="actor-source-status"></small><span id="enrich-feedback" class="actor-refresh-feedback hidden" aria-live="polite"></span></div>
+      <div id="actors-manual-panel" class="actor-manual-panel hidden">
+        <form id="actor-manual-form" class="actor-manual-form">
+          <div class="actor-manual-heading"><strong>Corrigir uma participação</strong><small>Acrescente um artista a um título visto. Não apaga o elenco que já existe.</small></div>
+          <label class="field"><span>Nome do artista</span><input id="actor-manual-name" placeholder="Ex.: Zendaya" required maxlength="100"></label>
+          <label class="field"><span>Filme ou série</span><select id="actor-manual-movie" class="select" required></select></label>
+          <label class="field"><span>Foto (opcional)</span><input id="actor-manual-photo" type="url" placeholder="Link da TMDb ou Wikimedia Commons"></label>
+          <button class="btn outline" type="submit">＋ Incluir participação</button>
+        </form>
+      </div>
+      <div id="sagas-options" class="sagas-options hidden">
+        <div><strong>Pastas de filmes relacionados</strong><small>Filmes com capa colorida já estão no ranking. Cartazes escurecidos ainda não foram cadastrados — não significa necessariamente que vocês não assistiram.</small></div>
+        <button id="scan-sagas" type="button" class="btn outline">↻ Descobrir mais sagas</button>
+        <button id="create-saga" type="button" class="btn ghost">＋ Criar pasta manual</button>
+        <span id="sagas-feedback" class="actor-refresh-feedback" role="status" aria-live="polite"></span>
+      </div>
+      <p id="ranking-help" class="ranking-help hidden">Do 1º ao último, por <strong>nossa nota</strong>. Os filmes do <strong>Top 3</strong> ocupam um nível especial acima da nota 10; depois, em caso de empate, vale a ordem definida em <strong>Por notas</strong>.</p>
+      <div id="tiers-container" class="tiers"></div>
+      <div id="grid-container" class="rank-list hidden" aria-label="Classificação geral de filmes e séries"></div>
+      <div id="artists-container" class="artists-list hidden" aria-label="Ranking de artistas"></div>
+      <div id="sagas-container" class="sagas-container hidden" aria-label="Pastas de sagas e trilogias"></div>
+    </section>
+    <footer><span>CINE<span class="brand-accent">DUO</span></span><span>Seu ranking, suas regras. Feito para vocês dois. ♥</span><span>Dados externos: OMDb / IMDb / Metacritic</span></footer>
+  </main>
+</div>
+
+<div id="modal-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section id="modal-add" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="add-title">
+    <header class="modal-header"><div><div class="eyebrow minor">UM NOVO TÍTULO PARA NOSSA HISTÓRIA</div><h2 id="add-title">Adicionar filme ou série</h2></div><button type="button" class="icon-button modal-close" title="Fechar" aria-label="Fechar">×</button></header>
+    <div class="modal-body">
+      <div class="tabs"><button type="button" id="tab-search" class="tab active">🔍 Buscar capa e informações</button><button type="button" id="tab-manual" class="tab">＋ Inserir manualmente</button></div>
+      <div id="add-search-panel">
+        <div class="field"><label for="search-type">O que vamos procurar?</label><select id="search-type" class="select"><option value="movie">🎬 Filme</option><option value="series">📺 Série</option></select></div>
+        <div class="field"><label for="omdb-search">Nome, ID ou link do IMDb</label><div class="input-row"><input id="omdb-search" placeholder="Ex.: Verity, tt32261958 ou link do IMDb" autocomplete="off"><button type="button" class="btn primary" id="search-omdb">Buscar</button></div><small>Pesquise por título ou cole o ID (tt...) ou o link do IMDb. A OMDb precisa ter o título cadastrado. Para séries, selecione “Série” antes de buscar pelo nome.</small></div>
+        <div id="search-results" class="search-results"></div>
+        <div id="chosen-preview" class="chosen-preview hidden"></div>
+      </div>
+      <form id="manual-form" class="hidden">
+        <div class="field"><label for="manual-type">Tipo de título</label><select id="manual-type" class="select"><option value="movie">🎬 Filme</option><option value="series">📺 Série</option></select></div>
+        <div class="two-col"><div class="field"><label for="manual-title">Título *</label><input id="manual-title" required placeholder="Nome do filme ou série"></div><div class="field"><label for="manual-year">Ano</label><input id="manual-year" placeholder="2026" maxlength="9"></div></div>
+        <div class="two-col"><div class="field"><label for="manual-score">Nossa nota</label><select id="manual-score" class="select score-select"></select></div><div class="field"><label for="manual-imdb">ID IMDb (opcional)</label><input id="manual-imdb" placeholder="tt1234567"></div></div>
+        <div class="field"><label for="manual-poster">Link da capa original (opcional)</label><input id="manual-poster" placeholder="https://..."></div>
+        <div class="field"><label for="manual-trailer">Link do trailer no YouTube (opcional)</label><input id="manual-trailer" type="url" placeholder="https://www.youtube.com/watch?v=..."></div>
+        <div class="field"><label for="manual-actors">Elenco principal (opcional)</label><input id="manual-actors" placeholder="Ex.: Actor A, Actriz B, Actor C"><small>Separe os nomes por vírgula para incluir no ranking de artistas.</small></div>
+        <div class="field"><label for="manual-plot">Sinopse (opcional)</label><textarea id="manual-plot" rows="3" placeholder="Sobre o que é o filme?"></textarea></div>
+        <div class="field"><label for="manual-notes">O que achamos dessa obra?</label><textarea id="manual-notes" rows="3" placeholder="Uma lembrança, opinião ou cena favorita..."></textarea></div>
+        <button type="submit" class="btn primary full">＋ Adicionar ao nosso ranking</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="modal-detail" class="modal detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <header class="modal-header"><div><div class="eyebrow minor">FICHA DO NOSSO FILME</div><h2 id="detail-title">Detalhes</h2></div><button type="button" class="icon-button modal-close" title="Fechar" aria-label="Fechar">×</button></header>
+    <div class="modal-body">
+      <div id="detail-hero" class="detail-hero"></div>
+      <div class="top3-detail-action"><button type="button" class="btn top3-detail-btn" id="detail-top3">☆ Adicionar ao Top 3</button><small>Máximo de três filmes. A seleção aparece acima da nota 10, sem duplicação.</small></div>
+      <section id="trailer-section" class="trailer-section" aria-label="Trailer do filme"></section>
+      <div class="sync-panel">
+        <div class="sync-panel-title">↻ Identificar filme e buscar notas automaticamente</div>
+        <p>Cole o ID <strong>tt...</strong> ou o link da ficha do IMDb. Ao atualizar, corrigimos capa, ano, elenco, nota IMDb e Metascore quando disponíveis na OMDb, mantendo a avaliação de vocês.</p>
+        <div class="input-row"><input type="text" id="sync-imdb-id" placeholder="tt14961016 ou link do IMDb" aria-label="ID ou link IMDb correto"><button class="btn outline" type="button" id="sync-one">↻ Atualizar filme</button></div>
+        <div id="sync-feedback" class="sync-feedback" role="status" aria-live="polite"></div>
+      </div>
+      <form id="edit-form">
+        <div class="detail-heading">Nossa avaliação</div>
+        <div class="two-col"><div class="field"><label for="edit-score">Nossa nota</label><select id="edit-score" class="select score-select"></select></div><div class="field"><label for="edit-date">Quando vimos</label><input type="date" id="edit-date"></div></div>
+        <div class="field"><label for="edit-notes">Nossa opinião ou memória desse filme</label><textarea id="edit-notes" rows="3" placeholder="O que fez esse filme merecer essa nota?"></textarea></div>
+        <details class="edit-metadata"><summary>Editar informações do título manualmente</summary>
+          <div class="field"><label for="edit-type">Tipo de título</label><select id="edit-type" class="select"><option value="movie">🎬 Filme</option><option value="series">📺 Série</option></select></div>
+          <div class="two-col"><div class="field"><label for="edit-title">Título</label><input id="edit-title" required></div><div class="field"><label for="edit-year">Ano</label><input id="edit-year"></div></div>
+          <div class="two-col"><div class="field"><label for="edit-imdb-id">ID IMDb</label><input id="edit-imdb-id" placeholder="tt1234567"></div><div class="field"><label for="edit-imdb-rating">Nota IMDb</label><input id="edit-imdb-rating" placeholder="8.6"></div></div>
+          <div class="two-col"><div class="field"><label for="edit-metascore">Metascore (0 a 100)</label><input id="edit-metascore" placeholder="81"></div><div class="field"><label for="edit-rotten">Rotten Tomatoes</label><input id="edit-rotten" placeholder="93%"></div></div>
+          <div class="field"><label for="edit-poster">URL da capa</label><input id="edit-poster" placeholder="https://..."></div>
+          <div class="field"><label for="edit-trailer">Link do trailer no YouTube (opcional)</label><input id="edit-trailer" type="url" placeholder="https://www.youtube.com/watch?v=..."><small>Salve um link do YouTube para assistir ao trailer dentro do CineDuo. Sem link, você pode procurá-lo no YouTube.</small></div>
+          <div class="field"><label for="edit-actors">Elenco principal (separado por vírgulas)</label><input id="edit-actors" placeholder="Ex.: Actor A, Actriz B"><small>Esses nomes são contabilizados no ranking de artistas.</small></div>
+          <div class="field"><label for="edit-plot">Sinopse</label><textarea id="edit-plot" rows="3"></textarea></div>
+        </details>
+        <div class="modal-buttons"><button class="btn primary" type="submit">✓ Salvar alterações</button><button class="btn danger" type="button" id="delete-one">Excluir filme</button></div>
+      </form>
+    </div>
+  </section>
+
+  <section id="modal-saga" class="modal saga-modal hidden" role="dialog" aria-modal="true" aria-labelledby="saga-modal-title">
+    <header class="modal-header"><div><div class="eyebrow minor">NOSSA MARATONA DE SAGAS</div><h2 id="saga-modal-title">Detalhes da saga</h2></div><button type="button" class="icon-button modal-close" title="Fechar" aria-label="Fechar">×</button></header>
+    <div class="modal-body" id="saga-modal-content"></div>
+  </section>
+
+  <section id="modal-settings" class="modal settings-modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <header class="modal-header"><div><div class="eyebrow minor">PERSONALIZE A EXPERIÊNCIA</div><h2 id="settings-title">Ajustes e backup</h2></div><button type="button" class="icon-button modal-close" title="Fechar" aria-label="Fechar">×</button></header>
+    <div class="modal-body">
+      <h3>Capas, sinopses e notas do IMDb</h3>
+      <p>O CineDuo usa a OMDb para buscar as capas originais disponíveis, a avaliação do público no IMDb e o Metascore dos críticos. O ranking pessoal é totalmente independente dessas notas.</p>
+      <form id="settings-form"><div class="field"><label for="api-key">Chave OMDb</label><div class="input-row"><input id="api-key" type="password" autocomplete="off" placeholder="Cole aqui sua chave gratuita"><button class="btn primary" type="submit">Salvar chave</button><button class="btn outline" id="test-omdb" type="button">Testar conexão</button></div><small id="key-status">Verificando configuração...</small><p id="omdb-test-result" class="import-result" role="status" aria-live="polite"></p></div></form>
+      <p class="help-link"><a href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noopener noreferrer">Solicitar uma chave OMDb gratuita ↗</a></p>
+      <hr>
+      <h3>Elenco completo e fotos de artistas (opcional)</h3>
+      <p>Na aba <strong>Ranking de artistas</strong>, clique em <strong>Completar elencos</strong> para buscar participantes adicionais. O CineDuo tenta Cinemeta e Wikidata sem outra chave. Para uma filmografia mais completa e fotos de perfil dos artistas, recomendamos configurar a chave gratuita da TMDb. O ranking só conta participações encontradas nos elencos cadastrados. As fotos vêm da Wikipédia ou da TMDb quando disponíveis.</p>
+      <form id="tmdb-form"><div class="field"><label for="tmdb-key">Chave TMDb API v3 (opcional)</label><div class="input-row"><input id="tmdb-key" type="password" autocomplete="off" placeholder="Cole a chave API v3 da TMDb"><button type="submit" class="btn outline">Salvar chave TMDb</button><button type="button" class="btn subtle" id="test-tmdb">Testar TMDb</button></div><small id="tmdb-status">Verificando configuração...</small></div></form>
+      <p id="tmdb-test-result" class="import-result" role="status" aria-live="polite"></p><p class="help-link"><a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">Solicitar chave gratuita TMDb ↗</a></p>
+      <p class="import-result">A TMDb também permite descobrir automaticamente sagas e seus capítulos que ainda não estão cadastrados em <strong>Sagas e trilogias</strong>. Elencos de obras recentes podem estar incompletos até nas fontes complementares. Você ainda poderá adicionar nomes em <strong>Editar informações → Elenco</strong>, e eles não serão apagados por atualizações normais da OMDb.</p>
+      <hr>
+      <h3>Créditos</h3>
+      <div class="tmdb-credit"><a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer"><img src="https://www.themoviedb.org/assets/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" loading="lazy" alt="TMDB — The Movie Database"></a><span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span></div>
+      <hr>
+      <h3>Importar filmes</h3>
+      <p>Já usa uma lista no IMDb? Exporte o CSV da lista e importe aqui. Os títulos entram sem nota pessoal se o arquivo não a trouxer; assim não inventamos a avaliação de vocês.</p>
+      <div class="backup-actions"><button class="btn outline" id="import-activate" type="button">↑ Importar CSV / JSON</button><input type="file" id="import-file" accept=".csv,.json,text/csv,application/json" hidden></div>
+      <p id="import-result" class="import-result"></p>
+      <h3>Salvar uma cópia</h3>
+      <p>Os filmes ficam armazenados no computador. Salve um backup JSON de vez em quando, especialmente antes de trocar de computador.</p>
+      <div class="backup-actions"><a class="btn outline" href="/api/export.json" download="CineDuo-backup.json">↓ Backup completo (.json)</a><a class="btn outline" href="/api/export.csv" download="CineDuo-filmes.csv">↓ Exportar tabela (.csv)</a></div>
+      <p class="privacy">🔒 Seus comentários e notas são privados, armazenados localmente. A chave OMDb também fica salva apenas no seu computador. Não coloque esta pasta em um serviço público sem proteção.</p>
+    </div>
+  </section>
+</div>
+<div id="toast" role="status" aria-live="polite" class="toast hidden"></div>
+<script src="/app.js?v=1.11" defer></script>
+</body>
+</html>

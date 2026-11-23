@@ -1,0 +1,58 @@
+CINEDUO 1.11 — CRONOLOGIA DE SAGAS + ATORES VERIFICADOS
+========================================================
+
+NOVIDADES
+1. As sagas do catálogo com cronologia conhecida aparecem na ORDEM DA HISTÓRIA,
+   e não pela data de lançamento.
+   - Invocação do Mal: A Freira (1952), Annabelle 2 (1955), A Freira 2 (1956),
+     Annabelle (1967), Invocação do Mal (1971), Annabelle 3 (1972),
+     A Maldição da Chorona (1973), Invocação do Mal 2 (1977),
+     Invocação do Mal 3 (1981), Invocação do Mal 4 (1986).
+   - Outros casos corrigidos: A Órfã (prequela primeiro), Uma Noite de Crime
+     (A Primeira Noite de Crime primeiro) e Jogos Vorazes (prequela primeiro).
+2. A Maldição da Chorona (2019, tt4913966) foi incluída na pasta
+   Universo Invocação do Mal conforme a preferência de vocês. Alguns
+   responsáveis pela franquia não consideram o filme integrante oficial.
+   A pasta pode reunir 10 títulos e a conclusão/média é recalculada.
+3. A TMDb não disponibiliza um campo universal com o ANO DA HISTÓRIA.
+   Para coleções sem cronologia conhecida, indicamos ordem de lançamento e
+   adicionamos botões ↑ ↓ para personalizar a ordem pela trama. Essa edição
+   fica salva e não é perdida ao usar Descobrir mais sagas.
+4. O ranking de artistas usa o elenco de ATUAÇÃO validado na TMDb (se há chave).
+   Não combina mais listas antigas de Cinemeta/Wikidata com papéis verificados.
+   Créditos de voz/dublagem, narração, arquivo e funções técnicas são excluídos.
+5. As listas antigas continuam preservadas no banco, mas NÃO entram na contagem
+   quando a TMDb está configurada e o elenco ainda não foi validado.
+   Use Ranking de artistas → Completar elencos para validar os títulos.
+   Somente obras com validação concluída entram na contagem automática.
+   Os nomes explicitamente incluídos no formulário manual permanecem válidos.
+6. Exportação de backup CineDuo JSON versão 3: preserva elencos verificados,
+   inclusões manuais e ordens de sagas. Importa backups versões 1, 2 e 3.
+7. A atualização cria app_data/backups/antes-da-v1.11.sqlite3 quando já existe
+   banco de dados. Não altera notas pessoais, capas e Top 3.
+
+COMO INSTALAR SEM PERDER SEUS FILMES
+1. Feche o CineDuo e a janela do Python.
+2. Faça uma cópia da pasta CineDuo atual, principalmente app_data.
+3. Extraia este ZIP e copie os arquivos app.py, app.js, index.html e
+   style.css para a pasta CineDuo existente, substituindo os quatro.
+4. NÃO substitua nem apague app_data, onde fica o banco de dados.
+5. Abra INICIAR_WINDOWS.bat e pressione Ctrl+F5 no navegador.
+6. Abra Sagas e trilogias → Universo Invocação do Mal e confira a ordem.
+7. Abra Ranking de artistas → Completar elencos. O botão usa a chave TMDb
+   já salva em Ajustes; pode exigir internet para cada consulta.
+
+OBSERVAÇÕES
+- Uma participação que só exista na lista antiga e NÃO seja confirmada como
+  atuação pela TMDb não aparecerá na contagem, para evitar falsos positivos.
+- Fotos de artistas continuam dependentes das imagens disponíveis na TMDb ou
+  das URLs manuais já salvas. O aplicativo não acessa o IMDb diretamente.
+- Se você havia acrescentado manualmente nomes em versões antigas editando o
+  campo Elenco, eles continuam no banco antigo, mas poderão ficar fora do
+  ranking verificado; use Corrigir uma participação para confirmá-los.
+- As médias das sagas continuam automáticas e são calculadas apenas a partir
+  das notas dos títulos já cadastrados, como na versão 1.10.
+- Para coleções sem cronologia verificada, não afirmamos que o ano de estreia
+  equivale ao ano em que a história se passa; use ↑ ↓ para ordenar.
+
+REQUISITOS: Python 3, sem instalar bibliotecas externas.

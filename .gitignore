@@ -1,0 +1,43 @@
+# Dados privados e chaves: NUNCA publicar
+app_data/
+**/app_data/
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+backups/
+*.bak
+*.backup
+
+# Credenciais e configuracoes locais
+.env
+.env.*
+!.env.example
+*credentials*.json
+*secrets*.json
+*token*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Editores / sistemas
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Arquivos de distribuicao
+*.zip
+*.7z
+*.rar
