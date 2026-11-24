@@ -400,3 +400,119 @@ footer{border-top:1px solid #ffffff14;padding:20px 0 40px;display:flex;align-ite
 .saga-sort-controls button:disabled{opacity:.28;cursor:not-allowed}
 .saga-story-year{color:#ebc17f}
 @media(max-width:600px){.saga-part-actions{flex-direction:column;align-items:flex-end}.saga-sort-controls{flex-direction:row}}
+
+/* ======================================================================
+   CineDuo v1.12 — catálogo formal, navegação compacta, pódio independente
+   Mantém intencionalmente o visual e o layout dos cartões POR NOTAS.
+   ====================================================================== */
+:root{--accent:#f5c518;--accentsoft:#f5c51818;--bg:#0e0f11;--panel:#1a1b1e;--panel2:#242529;--border:#38393e;--ink:#f6f6f6;--muted:#a3a4a9;--radius:6px;--shadow:0 24px 56px #0009}
+body{background:#0e0f11;color:var(--ink)}
+.topbar{height:68px;border-bottom:1px solid #303034}
+.brand{letter-spacing:.015em}.brand-accent{color:var(--accent)}
+.brand-mark{color:#171717!important;background:var(--accent)!important;border-color:transparent!important;border-radius:5px!important}
+.small-tag{font-size:10px;letter-spacing:.08em;color:#929398}
+.btn,.pill-switch,.small-toggle,.select{border-radius:5px}
+.btn.primary{background:var(--accent);color:#161616;border-color:#b99812;font-weight:800}
+.btn.primary:hover{background:#ffe071;color:#111}
+.btn.subtle,.btn.ghost,.btn.outline{background:#212227;color:#dedee2;border-color:#3c3d42}
+.btn.subtle:hover,.btn.ghost:hover,.btn.outline:hover{background:#303137}
+.intro{padding:23px 0 20px;border-bottom:1px solid #303034}
+.intro::before{display:none}
+.eyebrow,.eyebrow.minor{color:#aeb0b5;letter-spacing:.12em;font-size:10px}
+.live-dot{height:6px;width:6px;box-shadow:none;background:var(--accent)}
+h1{font-size:clamp(28px,3.2vw,42px);line-height:1.14;letter-spacing:-.04em;font-weight:830;margin:9px 0 19px}
+h1 em{color:var(--accent);font-weight:750;font-style:normal}
+.stats{margin-top:0;display:flex;flex-wrap:wrap;gap:9px}
+.stat,.stat:first-child{background:#1a1b1e;border:1px solid #333438;padding:10px 15px;min-width:170px;border-radius:5px;gap:4px}
+.stat strong{font-size:26px}.stat span{font-size:11px}
+.library{padding-top:23px}
+.section-top{margin-bottom:16px}.section-top h2{font-size:24px;margin:4px 0 0}
+.search-box,.sort-select,.pill-switch,.small-toggle{border-radius:5px;background:#1b1c20;border-color:#38393e}
+.search-box{height:43px}.pill-switch.active{background:#f5c51817;border-color:#b89d2d;color:#f7d85d}
+.pill-switch:hover,.small-toggle:hover{border-color:#c4a743}
+.toolbar{margin-bottom:16px}
+.modal{border-radius:9px}.modal-header,.edit-metadata,.trailer-section{border-radius:6px}
+footer>span:first-child{color:#f5c518}
+/* Pódio: ordem na grade = 2º | 1º | 3º. Não altera o ranking por notas. */
+.podium-section{margin:0 0 20px;border:1px solid #393a40;border-radius:7px;padding:20px 22px 0;background:#17181c;overflow:hidden}
+.podium-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}
+.podium-heading h3{font-size:23px;letter-spacing:-.035em;margin:4px 0 0;color:#f4f4f6}
+.podium-heading h3 span{color:#9e9fa7;font-size:15px;font-weight:600}
+.podium-count{font-size:11px;color:#a6a7b0;background:#202126;border:1px solid #36373b;border-radius:4px;padding:7px 11px}
+.podium-grid{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:14px;align-items:end;max-width:1020px;margin:0 auto}
+.podium-item{min-width:0;display:flex;flex-direction:column;align-items:stretch}
+.podium-card{min-width:0;background:#202127;border:1px solid #3b3d45;border-bottom:0;border-radius:6px 6px 0 0;padding:12px 12px 10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.podium-place-1 .podium-card{background:linear-gradient(180deg,#292613,#202127 54%);border-color:#82702d}
+.podium-place-2 .podium-card{border-color:#656b75}
+.podium-place-3 .podium-card{border-color:#7a5940}
+.podium-label{width:100%;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;font-size:10px;font-weight:800;color:#dedee2;letter-spacing:.12em}
+.podium-medal{font-size:21px;line-height:1}
+.podium-poster{width:96px;height:136px;border:1px solid #4c4d55;border-radius:4px;background:#2a2a32;color:#8b8e9e;display:grid;place-items:center;overflow:hidden;padding:0;flex:none}
+.podium-poster img{width:100%;height:100%;object-fit:cover;display:block}
+.podium-place-1 .podium-poster{width:114px;height:162px;border-color:#9a802a}
+.podium-poster-fallback{font-size:11px;font-weight:700;line-height:1.25;text-align:center;padding:12px}
+.podium-placeholder{font-size:26px;font-weight:300;color:#747682}
+.podium-info{width:100%;min-width:0;display:flex;flex-direction:column;gap:4px;text-align:center;min-height:42px}
+.podium-info strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f3f3f4}
+.podium-info small{font-size:10px;color:#9a9ca6}
+.podium-controls{display:flex;gap:6px;align-items:center;justify-content:center;min-height:27px}
+.podium-controls button{background:#292b31;border:1px solid #50525b;border-radius:3px;color:#ddd;padding:3px 8px;min-width:29px;font-size:13px;line-height:19px}
+.podium-controls button:hover:not(:disabled){border-color:#f5c518;color:#f5c518}
+.podium-controls-empty{color:#656875}
+.podium-base{height:48px;background:linear-gradient(#575e6a,#424750);border:1px solid #68707a;border-radius:3px 3px 0 0;display:flex;align-items:center;justify-content:center;gap:10px;color:#fafafa}
+.podium-place-1 .podium-base{height:70px;background:linear-gradient(#b89b3c,#7d6725);border-color:#d4b44c;color:#1e1b10}
+.podium-place-3 .podium-base{height:34px;background:linear-gradient(#8d6547,#60432e);border-color:#9e7554}
+.podium-base strong{font-size:25px;font-weight:900;line-height:1}
+.podium-base span{font-size:10px;font-weight:840;letter-spacing:.16em}
+.podium-place-1 .podium-base strong{font-size:32px}
+.podium-vacant .podium-card{opacity:.82}
+.podium-item.top3-muted{opacity:.55}
+/* Instalações novas não recebem filmes de demonstração. */
+.empty-catalog{padding:35px 20px;text-align:center;background:#18191e;border:1px dashed #45464d;border-radius:6px}
+.empty-catalog-icon{font-size:34px;color:var(--accent)}
+.empty-catalog h3{margin:12px 0 5px;font-size:22px;color:#f0f0f2}
+.empty-catalog p{font-size:13px;color:#a4a6af;max-width:510px;margin:0 auto 18px;line-height:1.5}
+.empty-catalog-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+@media(max-width:800px){.podium-section{padding:15px 12px 0}.podium-grid{gap:7px}.podium-card{padding:9px 4px 8px}.podium-poster{width:73px;height:103px}.podium-place-1 .podium-poster{width:85px;height:122px}.podium-label{font-size:9px;letter-spacing:0;gap:2px}.podium-medal{font-size:17px}.podium-info strong{font-size:10px}.podium-base{height:42px;gap:5px}.podium-place-1 .podium-base{height:58px}.podium-place-3 .podium-base{height:30px}.podium-base strong{font-size:22px}.podium-base span{font-size:8px}.podium-controls{gap:3px}.podium-controls button{min-width:24px;padding:2px 5px}}
+@media(max-width:680px){.topbar{height:62px}.intro{padding:23px 0 18px}h1{font-size:30px;margin:9px 0 16px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.stat,.stat:first-child{padding:9px 7px;min-width:0;border:1px solid #36373a}.stat:nth-child(odd){border:1px solid #36373a;padding-left:7px}.stat strong{font-size:20px}.stat span{font-size:9px}.library{padding-top:21px}.podium-section{margin-bottom:14px}.podium-heading{align-items:flex-start;gap:7px}.podium-heading h3{font-size:19px}.podium-heading h3 span{font-size:12px}.podium-count{font-size:9px;padding:6px}.podium-poster{width:64px;height:92px}.podium-place-1 .podium-poster{width:73px;height:106px}.podium-card{gap:6px}.podium-info{min-height:38px}.podium-info strong{font-size:9px}.podium-info small{font-size:9px}.podium-base span{display:none}}
+@media(max-width:360px){.podium-poster{width:55px;height:81px}.podium-place-1 .podium-poster{width:64px;height:92px}.podium-heading h3{font-size:18px}.stat strong{font-size:18px}}
+
+/* v1.13 — painel temporário de atualização e controles contextuais */
+.section-actions{display:flex;gap:9px;align-items:center;justify-content:flex-end}
+.task-progress{position:relative;padding:17px 18px 15px;border-radius:8px;border:1px solid #64533e;background:#231f1a;box-shadow:0 10px 24px #0002;animation:task-progress-in .18s ease-out}
+.task-progress-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}
+.task-progress-head strong{font-size:13px;font-weight:800;color:#f5e8ca}
+.task-progress-counter{font-size:12px;font-weight:850;color:#f5c518;font-variant-numeric:tabular-nums;white-space:nowrap}
+.task-progress .progress-rail{height:6px;border-radius:2px;background:#494038;margin-bottom:10px}
+.task-progress .progress-rail>div{background:#f5c518;border-radius:2px;transition:width .2s ease}
+.task-progress-line{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.task-progress-line span{font-size:12px;color:#e3d7c5}
+.task-progress-line #progress-remaining{font-weight:750;color:#f3cb69;white-space:nowrap}
+.task-progress-current{font-size:12px;font-weight:690;color:#eee7db;margin-top:9px;overflow-wrap:anywhere}
+.task-progress-details{font-size:11px;line-height:1.55;color:#c5b8a3;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.task-progress-details:empty{display:none}
+.task-progress-done{border-color:#486a52;background:#1d2a21}
+.task-progress-done .progress-rail>div{background:#77c790}
+.task-progress-error{border-color:#89555a;background:#302126}
+.task-progress-error .progress-rail>div{background:#e88686}
+.actor-manual-modal-form{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+.actor-manual-modal-form>.field{flex:auto;width:100%}
+.actor-manual-modal-form>.btn{width:100%}
+.actor-manual-instruction{font-size:12px;line-height:1.5;color:#b0adbd;margin:0 0 3px}
+@keyframes task-progress-in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:680px){
+  .section-actions .btn{min-width:0;max-width:160px;white-space:normal}
+  .task-progress{padding:13px 12px}
+  .task-progress-line{gap:7px;flex-wrap:wrap}
+  .task-progress-current{font-size:11px}
+}
+
+/* v1.14 — ações contextuais das sagas no cabeçalho; responsivo */
+.saga-head-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.saga-head-actions .btn{min-width:0}
+@media(max-width:720px){
+  .section-top:has(.saga-head-actions:not(.hidden)){flex-wrap:wrap;align-items:flex-start}
+  .section-top:has(.saga-head-actions:not(.hidden)) .section-actions{width:100%;justify-content:flex-start}
+  .saga-head-actions{width:100%;justify-content:flex-start}
+  .saga-head-actions .btn{flex:1 1 135px;max-width:none;font-size:11px;padding:11px 9px;white-space:normal;text-align:center}
+}

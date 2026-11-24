@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const state = { movies: [], settings: {has_key:false}, view:'tiers', showAll:false,
+const state = { movies: [], settings: {has_key:false}, view:'tiers',
   term:'', sort:'manual', activeId:null, selectedSearch:null, syncBusy:false, actorsIncludeSeries:false, actorPhotos:new Map(), enrichingCast:false, cancelCast:false, sagas:[], selectedSaga:null, sagaBusy:false, sagaError:null, sagaLoading:false };
 const COLORS={10:'#fe5958',9:'#ffa22e',8:'#ffe054',7:'#94db6d',6:'#5fc9b0',5:'#6fc1e6',4:'#a3a0f3',3:'#d58ed0',2:'#9ba0b7',1:'#737a8e',0:'#575d6c'};
 const TITLES={10:'EXCEPCIONAL',9:'INCRÍVEL',8:'MUITO BOM',7:'BOM',6:'LEGAL',5:'REGULAR',4:'FRACO',3:'RUIM',2:'MUITO RUIM',1:'PÉSSIMO',0:'NÃO CURTIMOS'};
@@ -25,6 +25,47 @@ let toastTimeout;
 function toast(message,type='success'){
   const el=$('toast');el.textContent=message;el.className='toast '+type;
   clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>el.classList.add('hidden'),4800);
+}
+let progressHideTimer=null;
+let progressTaskId=0;
+function progressBegin(label,total){
+  clearTimeout(progressHideTimer);
+  const task=++progressTaskId;
+  const box=$('sync-progress');
+  box.className='progress task-progress';
+  $('progress-heading').textContent=label;
+  $('progress-current').textContent='Preparando consulta...';
+  $('sync-details').textContent='';
+  progressUpdate(task,0,total,'Aguardando primeira resposta');
+  return task;
+}
+function progressUpdate(task,done,total,current='',message=''){
+  if(task!==progressTaskId)return;
+  const safeTotal=Math.max(0,Number(total)||0);
+  const count=Math.min(Math.max(0,Number(done)||0),safeTotal);
+  const remaining=Math.max(safeTotal-count,0);
+  const percent=pct(count,safeTotal);
+  $('progress-counter').textContent=`${count} / ${safeTotal}`;
+  $('progress-text').textContent=`${count} de ${safeTotal} consultados`;
+  $('progress-remaining').textContent=`${remaining} ${remaining===1?'restante':'restantes'}`;
+  $('progress-current').textContent=current;
+  $('sync-details').textContent=message;
+  $('progress-fill').style.width=percent+'%';
+  $('sync-progress').querySelector('[role="progressbar"]').setAttribute('aria-valuenow',String(percent));
+}
+function progressFinish(task,summary,details='',hasError=false){
+  if(task!==progressTaskId)return;
+  const box=$('sync-progress');
+  box.classList.toggle('task-progress-error',hasError);
+  box.classList.toggle('task-progress-done',!hasError);
+  $('progress-heading').textContent=hasError?'Consulta finalizada com avisos':'Atualização concluída';
+  $('progress-current').textContent=summary;
+  $('sync-details').textContent=details;
+  $('progress-remaining').textContent='Finalizado';
+  // Não inventar 100% quando a pesquisa foi interrompida com falha.
+  progressHideTimer=setTimeout(()=>{
+    if(task===progressTaskId)box.classList.add('hidden');
+  },hasError?6500:4200);
 }
 function optionsScore(selected=null){
   const choices=['<option value="">A avaliar (sem nota)</option>'];
@@ -103,27 +144,33 @@ function rankingRow(m,position){
   </article>`;
 }
 function top3Markup(allVisible){
+  // A ordem visual do pódio é prata · ouro · bronze; o ranking real continua 1/2/3.
   const selected=state.movies.filter(m=>m.top3_position).sort((a,b)=>a.top3_position-b.top3_position);
   const allowed=new Set(allVisible.map(m=>m.id));
-  const slots=[0,1,2].map(i=>{
-    const m=selected[i];
-    if(!m)return `<div class="top3-slot top3-empty"><span class="top3-medal">${['🥇','🥈','🥉'][i]}</span><span class="top3-emptytext">Lugar disponível</span><small>Abra um filme e escolha “Adicionar ao Top 3”</small></div>`;
-    const src=posterUrl(m.poster_url);
-    return `<div class="top3-slot ${allowed.has(m.id)?'':'top3-muted'}">
-      <span class="top3-medal">${['🥇','🥈','🥉'][i]}</span>
-      <button type="button" class="top3-film" data-open="${m.id}" title="Abrir a ficha de ${h(m.title)}">
-        <span class="top3-cover">${src?`<img src="${h(src)}" loading="lazy" alt="Capa de ${h(m.title)}">`:'🎞'}</span>
-        <span class="top3-title">${h(m.title)}</span><span class="top3-year">${h(m.year||'')}</span>
-      </button>
-      <div class="top3-controls">
-        <button type="button" data-top3-action="up" data-top3-id="${m.id}" ${i===0?'disabled':''} title="Subir na classificação">↑</button>
-        <button type="button" data-top3-action="down" data-top3-id="${m.id}" ${i===selected.length-1?'disabled':''} title="Descer na classificação">↓</button>
-        <button type="button" data-top3-action="remove" data-top3-id="${m.id}" title="Remover do Top 3">×</button>
-      </div></div>`;
+  const cards=[2,1,3].map(place=>{
+    const m=selected.find(item=>Number(item.top3_position)===place);
+    const rankName=['','OURO','PRATA','BRONZE'][place];
+    const title=m?h(m.title):'Posição disponível';
+    const src=m?posterUrl(m.poster_url):'';
+    const poster=m && src?`<img src="${h(src)}" loading="lazy" alt="Capa de ${title}">`:m?`<span class="podium-poster-fallback">${title}</span>`:'<span class="podium-placeholder">＋</span>';
+    return `<div class="podium-item podium-place-${place} ${m&&!allowed.has(m.id)?'top3-muted':''} ${m?'':'podium-vacant'}">
+      <div class="podium-card">
+        <div class="podium-label"><span class="podium-medal" aria-hidden="true">${['','🥇','🥈','🥉'][place]}</span><span>${place}º LUGAR</span></div>
+        ${m?`<button type="button" class="podium-poster" data-open="${m.id}" title="Abrir ${title}">${poster}</button>`:
+        `<div class="podium-poster" aria-label="Posição disponível">${poster}</div>`}
+        <div class="podium-info"><strong>${title}</strong><small>${m?h(m.year||''):'Escolha um filme no catálogo'}</small></div>
+        ${m?`<div class="podium-controls">
+          <button type="button" data-top3-action="up" data-top3-id="${m.id}" ${place===1?'disabled':''} aria-label="Subir ${title} no pódio" title="Subir">↑</button>
+          <button type="button" data-top3-action="down" data-top3-id="${m.id}" ${place===3?'disabled':''} aria-label="Descer ${title} no pódio" title="Descer">↓</button>
+          <button type="button" data-top3-action="remove" data-top3-id="${m.id}" aria-label="Retirar ${title} do Top 3" title="Retirar do Top 3">×</button>
+        </div>`:'<div class="podium-controls podium-controls-empty">—</div>'}
+      </div>
+      <div class="podium-base"><strong>${place}</strong><span>${rankName}</span></div>
+    </div>`;
   }).join('');
-  return `<section class="top3-section" aria-label="Nosso Top 3">
-    <div class="top3-heading"><div><span class="top3-kicker">✦ NOSSA SELEÇÃO ESPECIAL</span><h3>🏆 Top 3 <small>(${selected.length}/3)</small></h3></div><p>Acima da nota 10. Cada filme aparece uma única vez no ranking.</p></div>
-    <div class="top3-list">${slots}</div>
+  return `<section class="podium-section" aria-label="Pódio Top 3 do CineDuo">
+    <div class="podium-heading"><div><span class="eyebrow minor">DESTAQUES</span><h3>Top 3 <span>· Pódio</span></h3></div><span class="podium-count">${selected.length} / 3 selecionados</span></div>
+    <div class="podium-grid">${cards}</div>
   </section>`;
 }
 function artistsRanking(){
@@ -148,10 +195,13 @@ function artistsRanking(){
 }
 function artistMarkup(){
   const q=norm(state.term);
-  const actors=artistsRanking().filter(a=>!q||norm(a.name).includes(q)||a.titles.some(m=>norm(m.title).includes(q)));
-  if(!actors.length) return '<div class="empty-search">Nenhum crédito de atuação confirmado nesta busca. Clique em <strong>Completar elencos</strong> com sua chave TMDb configurada, ou inclua uma participação manualmente.</div>';
+  const allActors=artistsRanking();
+  const matching=q?allActors.filter(a=>norm(a.name).includes(q)||a.titles.some(m=>norm(m.title).includes(q))):allActors;
+  const actors=q?matching:matching.slice(0,100);
+  if(!actors.length) return '<div class="empty-search">Nenhum artista encontrado nesta pesquisa. Confira o nome ou complete os elencos pela TMDb.</div>';
   const verifiedCount=state.movies.filter(m=>m.cast_status==='verified').length;
-  return `<div class="actor-summary">Ranking por <strong>papéis de atuação</strong> em títulos assistidos, não por episódios. ${state.actorsIncludeSeries?'Incluindo séries.':'Somente filmes.'} <strong>${verifiedCount} de ${state.movies.length} títulos</strong> com elenco validado pela TMDb. As listas antigas não verificadas podem conter erros: use <strong>Completar elencos</strong> para excluir dublagem, arquivo e equipe técnica. Inclusões manuais permanecem.</div>`+
+  const limitMessage=q?`${actors.length} resultado(s) encontrados em todo o ranking.`:`Exibindo os ${actors.length} primeiros de ${allActors.length} artistas. Use a busca para localizar qualquer outro nome, mesmo fora dos 100 primeiros.`;
+  return `<div class="actor-summary"><strong>${h(limitMessage)}</strong> ${state.actorsIncludeSeries?'Incluindo séries.':'Somente filmes.'} <strong>${verifiedCount} de ${state.movies.length} títulos</strong> com elenco validado pela TMDb. Contagem por títulos assistidos, não por episódios.</div>`+
   actors.map(a=>`<article class="actor-entry">
     <div class="actor-rank">${a.rank}<small>º</small></div>
     <div class="actor-avatar" data-photo-name="${h(a.name)}" title="Foto de ${h(a.name)}"><span>${h(a.name.split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())}</span></div>
@@ -228,19 +278,25 @@ async function editArtistPhoto(name){
 }
 
 async function enrichAllCast(){
-  if(state.enrichingCast){state.cancelCast=true;toast('Interrompendo após as consultas em andamento.');return}
+  if(state.enrichingCast){
+    state.cancelCast=true;
+    $('progress-current').textContent='Interrompendo após o grupo atual...';
+    return;
+  }
   const candidates=state.movies.filter(m=>/^tt\d{7,10}$/i.test(m.imdb_id||''));
   if(!candidates.length){toast('Cadastre IDs do IMDb para identificar o elenco dos títulos.','error');return}
   if(!confirm(`Validar apenas atores e atrizes em ${candidates.length} título(s)?\n\nA TMDb precisa estar configurada. Créditos de voz, arquivo, música e equipe serão excluídos da contagem. O elenco anterior será preservado como histórico. Nenhuma nota será alterada.`))return;
   state.enrichingCast=true;state.cancelCast=false;
   const btn=$('enrich-actors');btn.textContent='■ Parar atualização';
-  const report=$('enrich-feedback');report.classList.remove('hidden');
+  const task=progressBegin('Completando elencos e fotos',candidates.length);
   let done=0,added=0,found=0,errors=0,tmdbSuccess=0; const details=[];
+  let criticalError=null;
   try{
-    // Trabalha em grupos de até três e oferece um controle de interrupção.
     for(let i=0;i<candidates.length;i+=3){
       if(state.cancelCast)break;
       const group=candidates.slice(i,i+3);
+      progressUpdate(task,done,candidates.length,`Consultando: ${group.map(m=>m.title).join(' · ')}`,
+        `${found} elencos validados · ${errors} falhas`);
       const outcomes=await Promise.all(group.map(m=>api('/api/actors/enrich','POST',{id:m.id})
         .catch(e=>({error:e.message,title:m.title}))));
       done+=group.length;
@@ -252,10 +308,9 @@ async function enrichAllCast(){
           if(o.note && details.length<6)details.push((o.title||'Título')+': '+o.note);
         }
       }
-      report.textContent=`${done}/${candidates.length} títulos consultados • ${found} elencos validados pela TMDb${errors?' • '+errors+' falhas':''}`;
+      progressUpdate(task,done,candidates.length,`Últimos consultados: ${group.map(m=>m.title).join(' · ')}`,
+        `${found} elencos validados · ${errors} falhas`);
       const prevScroll=window.scrollY;
-      // Fotos novas vindas da TMDb devem ser recarregadas, inclusive se
-      // uma busca anterior na Wikipédia não encontrou retrato.
       state.actorPhotos.clear();
       state.movies=await api('/api/movies');
       if(state.view==='actors')render();
@@ -263,15 +318,15 @@ async function enrichAllCast(){
       await new Promise(resolve=>setTimeout(resolve,60));
     }
     const diagnostics=await api('/api/actors/diagnostics').catch(()=>null);
-    report.textContent+=(state.cancelCast?' • Interrompido.':' • Concluído.')+
-      `\nTMDb: ${diagnostics?.tmdb_key_configured?`configurada, respondeu em ${tmdbSuccess} títulos`:'SEM CHAVE — elencos incompletos'}.`+
-      `\nRetratos salvos: ${diagnostics?.with_photo??'—'}. ${details.slice(0,3).join(' | ')}`;
-    if(!added && !diagnostics?.tmdb_key_configured){toast('Configure a TMDb em Ajustes e execute a validação dos atores.','error')}
-    else toast(`Elencos revisados: ${tmdbSuccess} títulos com atuação validada.`);
-  }catch(err){toast(err.message,'error')}
+    const summary=state.cancelCast?'Consulta interrompida.':`${done} títulos consultados · ${tmdbSuccess} elencos validados pela TMDb.`;
+    const info=errors?`${errors} falhas. ${details.slice(0,2).join(' | ')}`:
+      `Fotos salvas no banco: ${diagnostics?.with_photo??'—'}.`;
+    progressFinish(task,summary,info,errors>0||state.cancelCast||!diagnostics?.tmdb_key_configured);
+    if(!diagnostics?.tmdb_key_configured)toast('Configure a TMDb em Ajustes para validar os elencos.','error');
+    else toast(`Elencos revisados: ${tmdbSuccess} títulos validados.`);
+  }catch(err){criticalError=err;progressFinish(task,'A atualização dos elencos falhou.',err.message,true);toast(err.message,'error')}
   finally{state.enrichingCast=false;state.cancelCast=false;btn.textContent='↻ Completar elencos'}
 }
-
 
 async function loadSagas(){
   state.sagaError=null;
@@ -370,23 +425,32 @@ async function moveSagaPart(index,action){
 }
 
 async function scanSagas(){
-  if(state.sagaBusy){state.sagaCancel=true;$('sagas-feedback').textContent='Encerrando a consulta depois do grupo atual...';return}
+  if(state.sagaBusy){
+    state.sagaCancel=true;
+    $('progress-current').textContent='Interrompendo após o grupo atual...';
+    return;
+  }
   state.sagaBusy=true;state.sagaCancel=false;
   const btn=$('scan-sagas');btn.textContent='■ Parar pesquisa';
-  $('sagas-feedback').textContent='Consultando coleções da TMDb sem alterar o ranking...';
-  let processed=0,total=0,found=0,errors=0;
+  const task=progressBegin('Descobrindo sagas e continuações',state.movies.length);
+  let processed=0,total=state.movies.length,found=0,errors=0;
   try{
-    // Trabalha em grupos pequenos; a pessoa acompanha o progresso e pode parar.
     for(let offset=0;offset<200;offset+=6){
       if(state.sagaCancel)break;
+      const next=state.movies.slice(offset,offset+6).map(m=>m.title).join(' · ');
+      progressUpdate(task,processed,total,`Consultando: ${next||'Coleções da TMDb'}`);
       const result=await api('/api/sagas/scan','POST',{offset,limit:6});
       total=result.total;processed+=result.attempted;found+=result.collections;errors+=result.errors.length;
       await loadSagas();render();
-      $('sagas-feedback').textContent=`${processed}/${total} filmes conferidos · ${found} coleções identificadas${errors?' · '+errors+' consultas com falha':''}`;
+      progressUpdate(task,processed,total,`Último grupo consultado: ${next||'Coleções'}`,
+        `${found} coleções encontradas · ${errors} falhas`);
       if(processed>=total||result.attempted===0)break;
     }
-    toast(state.sagaCancel?'Pesquisa interrompida. Pastas encontradas foram salvas.':'Pesquisa de sagas concluída.');
-  }catch(e){toast(e.message,'error');$('sagas-feedback').textContent=e.message}
+    const stopped=state.sagaCancel;
+    progressFinish(task,stopped?'Pesquisa interrompida. Pastas encontradas foram salvas.':`${found} coleções identificadas.`,
+      `${processed} de ${total} títulos consultados${errors?' · '+errors+' falhas':''}.`,stopped||errors>0);
+    toast(stopped?'Pesquisa interrompida.':'Pesquisa de sagas concluída.');
+  }catch(e){progressFinish(task,'Não foi possível descobrir novas sagas.',e.message,true);toast(e.message,'error')}
   finally{state.sagaBusy=false;state.sagaCancel=false;btn.textContent='↻ Descobrir mais sagas'}
 }
 async function createSaga(){
@@ -412,7 +476,7 @@ async function addMissingSagaFilm(key,index){
 async function saveArtistManual(e){e.preventDefault();
   try{const name=val('actor-manual-name');const id=Number($('actor-manual-movie').value);
     await api('/api/actors/manual','POST',{name,movie_id:id,photo_url:val('actor-manual-photo')});
-    state.actorPhotos.delete(norm(name));$('actor-manual-photo').value='';await reload();toast('Participação incluída. O ranking foi recalculado!');
+    state.actorPhotos.delete(norm(name));$('actor-manual-photo').value='';await reload();closeModal();toast('Participação incluída. O ranking foi recalculado!');
   }catch(err){toast(err.message,'error')}
 }
 function actorMovieSelect(){
@@ -437,14 +501,13 @@ function render(){
   $('grid-view').classList.toggle('active',state.view==='grid');
   $('actors-view').classList.toggle('active',state.view==='actors');
   $('sagas-view').classList.toggle('active',state.view==='sagas');
-  $('toggle-empty').textContent=state.showAll?'Ocultar notas vazias':'Mostrar todas as notas';
   $('sort-select').classList.toggle('hidden',state.view!=='tiers');
-  $('toggle-empty').classList.toggle('hidden',state.view!=='tiers');
+  $('refresh-all').classList.toggle('hidden',state.view==='actors'||state.view==='sagas');
+  $('saga-head-actions').classList.toggle('hidden',state.view!=='sagas');
+  $('enrich-actors').classList.toggle('hidden',state.view!=='actors');
   $('actors-options').classList.toggle('hidden',state.view!=='actors');
   $('actors-source-status').textContent=state.settings.has_tmdb_key?'TMDb configurada · valide os elencos para excluir dubladores e equipe':'TMDb não configurada · os créditos antigos ainda não foram validados';
-  $('actors-manual-panel').classList.toggle('hidden',state.view!=='actors');
   $('sagas-options').classList.toggle('hidden',state.view!=='sagas');
-  $('ranking-help').classList.toggle('hidden',state.view!=='grid');
   $('tiers-container').classList.toggle('hidden',state.view!=='tiers');
   $('grid-container').classList.toggle('hidden',state.view!=='grid');
   $('artists-container').classList.toggle('hidden',state.view!=='actors');
@@ -462,8 +525,11 @@ function render(){
     $('artists-container').innerHTML=artistMarkup();
     loadActorPhotos();
   }else if(!shown.length){
-    const txt='<div class="empty-search">Nenhum título encontrado. Tente outro termo ou adicione uma obra à lista. 🍿</div>';
-    $('tiers-container').innerHTML=txt;$('grid-container').innerHTML=txt;
+    const txt=state.movies.length
+      ?'<div class="empty-search">Nenhum título corresponde à busca. Tente outro termo.</div>'
+      :'<div class="empty-search empty-catalog"><span class="empty-catalog-icon">▤</span><h3>Seu catálogo está vazio</h3><p>Adicione um filme ou série pela pesquisa do IMDb ou importe um backup do CineDuo.</p><div class="empty-catalog-actions"><button type="button" class="btn primary" data-empty-add>＋ Adicionar primeiro título</button><button type="button" class="btn ghost" data-empty-import>Importar backup</button></div></div>';
+    $('tiers-container').innerHTML=(state.movies.length?'':top3Markup([]))+txt;
+    $('grid-container').innerHTML=txt;
   }else if(state.view==='grid'){
     // O Top 3 ocupa os primeiros lugares; os demais seguem por nota pessoal.
     const ranking=[...state.movies].sort((a,b)=>{
@@ -482,7 +548,7 @@ function render(){
     $('tiers-container').innerHTML=top3Markup(shown)+ranks.map(s=>{
       // TOP 3 é uma categoria própria, acima da nota 10: não duplica na faixa.
       const movies=shown.filter(m=>m.personal_rating===s&&!m.top3_position);
-      if(!state.showAll&&!movies.length&&s!==null&&s<7)return '';
+      if(!movies.length&&s!==null&&s<7)return '';
       if(s===null&&!movies.length)return '';
       const color= s===null?'#7a7d88':COLORS[s];
       const darkInk=s!==null&&s>=5;
@@ -537,7 +603,7 @@ async function changeTop3(id,action){
 
 function openModal(name){
   $('modal-backdrop').classList.remove('hidden');$('modal-backdrop').setAttribute('aria-hidden','false');
-  ['add','detail','settings','saga'].forEach(n=>{ $('modal-'+n).classList.toggle('hidden',n!==name) });
+  ['add','detail','settings','saga','artist'].forEach(n=>{ $('modal-'+n).classList.toggle('hidden',n!==name) });
   document.body.style.overflow='hidden';
 }
 function closeModal(){
@@ -723,7 +789,7 @@ async function saveDetail(e){
       toast('ID corrigido! Capa e notas consultadas automaticamente.');
     }else{
       await api('/api/movies/'+id,'PATCH',modified);
-      toast('Alterações salvas! ♥');
+      toast('Alterações salvas.');
     }
     await reload();closeModal();
   }catch(e){toast(e.message,'error')}
@@ -816,38 +882,37 @@ async function importFile(e){
 async function syncAll(){
   if(state.syncBusy)return;
   if(!state.settings.has_key){openSettings();return toast('Configure primeiro a chave OMDb.','error')}
-  const missing=state.movies;
-  if(!missing.length)return toast('Adicione seu primeiro filme antes de atualizar.');
-  state.syncBusy=true;$('refresh-all').disabled=true;$('sync-progress').classList.remove('hidden');
-  $('sync-details').textContent='';
-  let success=0,fail=0,errors=[];let stopped=false;
+  const movies=state.movies;
+  if(!movies.length)return toast('Adicione seu primeiro filme antes de atualizar.');
+  state.syncBusy=true;$('refresh-all').disabled=true;
+  const task=progressBegin('Atualizando capas e notas',movies.length);
+  let success=0,fail=0,errors=[],stopped=false,done=0;
   try{
-    for(let i=0;i<missing.length;i++){
-      $('progress-fill').style.width=pct(i,missing.length)+'%';
-      $('progress-text').textContent=`Consultando ${i+1} de ${missing.length}: ${missing[i].title}...`;
-      try{await api(`/api/movies/${missing[i].id}/sync`,'POST');success++}
+    for(let i=0;i<movies.length;i++){
+      const title=movies[i].title;
+      progressUpdate(task,done,movies.length,`Atualizando: ${title}`,
+        `${success} atualizados · ${fail} falhas`);
+      try{await api(`/api/movies/${movies[i].id}/sync`,'POST');success++}
       catch(e){
-        fail++;errors.push(`${missing[i].title}: ${e.message}`);
+        fail++;errors.push(`${title}: ${e.message}`);
         const lower=e.message.toLowerCase();
-        // Não insistir quando o serviço ou a chave estiver indisponível.
         if(lower.includes('chave')||lower.includes('conectar')||lower.includes('conexão')||
            lower.includes('http ')||lower.includes('limite')||lower.includes('certificado')||
-           lower.includes('inesperado')||lower.includes('tempo esgotado')){stopped=true;break}
+           lower.includes('inesperado')||lower.includes('tempo esgotado')){stopped=true;done++;break}
       }
+      done++;
+      progressUpdate(task,done,movies.length,`Último consultado: ${title}`,
+        `${success} atualizados · ${fail} falhas`);
     }
-    $('progress-fill').style.width='100%';
-    $('progress-text').textContent=`Concluído: ${success} filme(s) atualizado(s), ${fail} falha(s).`;
-    $('sync-details').textContent=errors.length?
-      (stopped?'A atualização foi interrompida por um problema de conexão/chave.\n':'')+
-      errors.slice(0,7).join('\n')+(errors.length>7?`\n... e mais ${errors.length-7} falhas.`:''):
-      'Consulta concluída. Notas indisponíveis na OMDb permanecem como —.';
     await reload();
-    if(fail)toast(`Atenção: ${fail} falha(s). O motivo aparece abaixo da barra de progresso.`, 'error');
-    else toast(`${success} filmes consultados com sucesso!`);
-  }catch(e){$('sync-details').textContent='Erro: '+e.message;toast(e.message,'error')}
+    const summary=stopped?'Atualização interrompida por erro de comunicação.':`${success} título(s) consultado(s), ${fail} falha(s).`;
+    const details=errors.length?errors.slice(0,3).join(' | '):'Notas indisponíveis na OMDb continuam como —.';
+    progressFinish(task,summary,details,stopped||fail>0);
+    if(fail)toast(`Atenção: ${fail} falha(s). ${errors[0]||''}`,'error');
+    else toast(`${success} títulos consultados com sucesso!`);
+  }catch(e){progressFinish(task,'Não foi possível concluir a atualização.',e.message,true);toast(e.message,'error')}
   finally{state.syncBusy=false;$('refresh-all').disabled=false}
 }
-
 function listeners(){
   document.querySelectorAll('.add-activate').forEach(el=>el.addEventListener('click',()=>openAdd()));
   document.querySelectorAll('.settings-activate').forEach(el=>el.addEventListener('click',openSettings));
@@ -855,6 +920,8 @@ function listeners(){
   $('modal-backdrop').addEventListener('click',e=>{if(e.target===$('modal-backdrop'))closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal-backdrop').classList.contains('hidden'))closeModal()});
   document.addEventListener('click',e=>{
+    if(e.target.closest('[data-empty-add]')){openAdd();return}
+    if(e.target.closest('[data-empty-import]')){$('import-file').click();return}
     if(e.target.closest('#retry-sagas')){showSagas();return}
     const photoButton=e.target.closest('[data-artist-photo]');
     if(photoButton){editArtistPhoto(photoButton.dataset.artistPhoto);return}
@@ -863,8 +930,7 @@ function listeners(){
     const adding=e.target.closest('[data-saga-add]');if(adding){addMissingSagaFilm(adding.dataset.sagaAdd,Number(adding.dataset.sagaIndex));return}
     const actorManual=e.target.closest('[data-artist-manual]');if(actorManual){
       $('actor-manual-name').value=actorManual.dataset.artistManual;
-      $('actor-manual-form').scrollIntoView({behavior:'smooth',block:'center'});
-      $('actor-manual-movie').focus();return}
+      actorMovieSelect();openModal('artist');$('actor-manual-movie').focus();return}
     const top3=e.target.closest('[data-top3-action]');
     if(top3){changeTop3(Number(top3.dataset.top3Id),top3.dataset.top3Action);return}
     const open=e.target.closest('[data-open]');if(open){openDetail(open.dataset.open);return}
@@ -888,7 +954,6 @@ function listeners(){
     const m=state.movies.find(x=>x.id===state.activeId);
     changeTop3(state.activeId,m?.top3_position?'remove':'add');
   }});
-  $('toggle-empty').addEventListener('click',()=>{state.showAll=!state.showAll;render()});
   $('tab-search').addEventListener('click',()=>toggleAddTab('search'));
   $('tab-manual').addEventListener('click',()=>toggleAddTab('manual'));
   $('search-omdb').addEventListener('click',searchOMDb);

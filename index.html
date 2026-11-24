@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#121218">
-  <meta name="description" content="CineDuo: nosso ranking pessoal de filmes e séries, com capas, notas e comentários.">
-  <title>CineDuo — Nosso ranking de filmes e séries</title>
+  <meta name="description" content="CineDuo: catálogo e ranking de filmes, séries, artistas e sagas.">
+  <title>CineDuo — Catálogo e Ranking</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/style.css?v=1.11">
+  <link rel="stylesheet" href="/style.css?v=1.14">
 </head>
 <body>
 <div class="app-shell">
@@ -17,7 +17,7 @@
       <span>CINE<span class="brand-accent">DUO</span></span>
     </div>
     <div class="top-actions">
-      <span class="small-tag">NOSSO CINEMA PARTICULAR</span>
+      <span class="small-tag">CATÁLOGO DE FILMES E SÉRIES</span>
       <button class="btn subtle settings-activate" title="Configurações e backup" type="button">⚙ <span class="hide-small">Ajustes</span></button>
       <button class="btn primary add-activate" type="button">＋ <span>Adicionar título</span></button>
     </div>
@@ -25,11 +25,11 @@
 
   <main>
     <section class="intro">
-      <div class="eyebrow"><span class="live-dot"></span> NOSSA HISTÓRIA EM FILMES</div>
-      <h1>Os filmes que <em>vivemos juntos.</em></h1>
-      <div class="stats" aria-label="Estatísticas do nosso ranking">
+      <div class="eyebrow"><span class="live-dot"></span> CINEDUO / PAINEL</div>
+      <h1>Catálogo <em>&amp; Ranking</em></h1>
+      <div class="stats" aria-label="Estatísticas do catálogo">
         <div class="stat"><strong id="stat-total">—</strong><span id="stat-total-label">títulos no ranking</span></div>
-        <div class="stat"><strong id="stat-avg">—</strong><span>nossa nota média</span></div>
+        <div class="stat"><strong id="stat-avg">—</strong><span>média das avaliações</span></div>
         <div class="stat"><strong id="stat-ten">—</strong><span>nota 10 <span aria-hidden="true">★</span></span></div>
         
       </div>
@@ -38,12 +38,25 @@
     <section class="library" aria-labelledby="library-title">
       <div class="section-top">
         <div>
-          <div class="eyebrow minor">COLEÇÃO PARTICULAR</div>
-          <h2 id="library-title">Nosso ranking <span id="current-count" class="count-label"></span></h2>
+          <div class="eyebrow minor">BIBLIOTECA</div>
+          <h2 id="library-title">Classificação <span id="current-count" class="count-label"></span></h2>
         </div>
-        <button type="button" class="btn ghost" id="refresh-all" title="Corrigir identificação e consultar todas as capas e notas disponíveis">↻ Atualizar notas e capas</button>
+        <div class="section-actions">
+          <button type="button" class="btn ghost" id="refresh-all" title="Consultar novamente capas e notas da OMDb">↻ Atualizar notas e capas</button>
+          <button type="button" class="btn ghost hidden" id="enrich-actors" title="Completar elencos e fotos pela TMDb">↻ Completar elencos</button>
+          <div id="saga-head-actions" class="saga-head-actions hidden" aria-label="Ações das sagas">
+            <button id="scan-sagas" type="button" class="btn outline">↻ Descobrir mais sagas</button>
+            <button id="create-saga" type="button" class="btn ghost">＋ Criar pasta manual</button>
+          </div>
+        </div>
       </div>
-      <div id="sync-progress" class="progress hidden" aria-live="polite"><div class="progress-rail"><div id="progress-fill"></div></div><span id="progress-text"></span><div id="sync-details" style="margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere"></div></div>
+      <div id="sync-progress" class="progress task-progress hidden" role="status" aria-live="polite" aria-atomic="false">
+        <div class="task-progress-head"><strong id="progress-heading">Atualizando dados</strong><span id="progress-counter" class="task-progress-counter">0 / 0</span></div>
+        <div class="progress-rail" role="progressbar" aria-label="Andamento da atualização" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress-fill"></div></div>
+        <div class="task-progress-line"><span id="progress-text">Preparando consulta...</span><span id="progress-remaining">0 restantes</span></div>
+        <div id="progress-current" class="task-progress-current"></div>
+        <div id="sync-details" class="task-progress-details"></div>
+      </div>
       <div class="toolbar">
         <label class="search-box" for="library-search"><span class="search-symbol">⌕</span>
           <input id="library-search" placeholder="Buscar filme ou série no ranking..." autocomplete="off">
@@ -61,38 +74,36 @@
             <option value="critics">Maior crítica</option>
             <option value="year">Mais recentes</option>
           </select>
-          <button class="small-toggle" id="toggle-empty" title="Mostrar ou ocultar notas vazias" type="button">Mostrar todas as notas</button>
         </div>
       </div>
-      <div id="actors-options" class="actors-options hidden"><label><input type="checkbox" id="actors-include-series"> Incluir séries no ranking dos artistas</label><button id="enrich-actors" type="button" class="btn outline actor-refresh">↻ Completar elencos</button><small id="actors-source-status" class="actor-source-status"></small><span id="enrich-feedback" class="actor-refresh-feedback hidden" aria-live="polite"></span></div>
-      <div id="actors-manual-panel" class="actor-manual-panel hidden">
-        <form id="actor-manual-form" class="actor-manual-form">
-          <div class="actor-manual-heading"><strong>Corrigir uma participação</strong><small>Acrescente um artista a um título visto. Não apaga o elenco que já existe.</small></div>
-          <label class="field"><span>Nome do artista</span><input id="actor-manual-name" placeholder="Ex.: Zendaya" required maxlength="100"></label>
-          <label class="field"><span>Filme ou série</span><select id="actor-manual-movie" class="select" required></select></label>
-          <label class="field"><span>Foto (opcional)</span><input id="actor-manual-photo" type="url" placeholder="Link da TMDb ou Wikimedia Commons"></label>
-          <button class="btn outline" type="submit">＋ Incluir participação</button>
-        </form>
-      </div>
+      <div id="actors-options" class="actors-options hidden"><label><input type="checkbox" id="actors-include-series"> Incluir séries no ranking dos artistas</label><small id="actors-source-status" class="actor-source-status"></small></div>
       <div id="sagas-options" class="sagas-options hidden">
         <div><strong>Pastas de filmes relacionados</strong><small>Filmes com capa colorida já estão no ranking. Cartazes escurecidos ainda não foram cadastrados — não significa necessariamente que vocês não assistiram.</small></div>
-        <button id="scan-sagas" type="button" class="btn outline">↻ Descobrir mais sagas</button>
-        <button id="create-saga" type="button" class="btn ghost">＋ Criar pasta manual</button>
-        <span id="sagas-feedback" class="actor-refresh-feedback" role="status" aria-live="polite"></span>
       </div>
-      <p id="ranking-help" class="ranking-help hidden">Do 1º ao último, por <strong>nossa nota</strong>. Os filmes do <strong>Top 3</strong> ocupam um nível especial acima da nota 10; depois, em caso de empate, vale a ordem definida em <strong>Por notas</strong>.</p>
       <div id="tiers-container" class="tiers"></div>
       <div id="grid-container" class="rank-list hidden" aria-label="Classificação geral de filmes e séries"></div>
       <div id="artists-container" class="artists-list hidden" aria-label="Ranking de artistas"></div>
       <div id="sagas-container" class="sagas-container hidden" aria-label="Pastas de sagas e trilogias"></div>
     </section>
-    <footer><span>CINE<span class="brand-accent">DUO</span></span><span>Seu ranking, suas regras. Feito para vocês dois. ♥</span><span>Dados externos: OMDb / IMDb / Metacritic</span></footer>
+    <footer><span>CINE<span class="brand-accent">DUO</span></span><span>Catálogo e classificação pessoal · CineDuo v1.14</span><span>Dados externos: OMDb / IMDb / Metacritic</span></footer>
   </main>
 </div>
 
 <div id="modal-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section id="modal-artist" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-artist-title">
+    <header class="modal-header"><div><div class="eyebrow minor">RANKING DE ARTISTAS</div><h2 id="modal-artist-title">Incluir participação manual</h2></div><button type="button" class="icon-button modal-close" aria-label="Fechar">×</button></header>
+    <div class="modal-body">
+      <form id="actor-manual-form" class="actor-manual-form actor-manual-modal-form">
+        <p class="actor-manual-instruction">Use esta opção apenas para corrigir um crédito de atuação que não foi encontrado automaticamente.</p>
+        <label class="field"><span>Nome do artista</span><input id="actor-manual-name" placeholder="Ex.: Zendaya" required maxlength="100"></label>
+        <label class="field"><span>Filme ou série</span><select id="actor-manual-movie" class="select" required></select></label>
+        <label class="field"><span>Foto (opcional)</span><input id="actor-manual-photo" type="url" placeholder="Link da TMDb ou Wikimedia Commons"></label>
+        <button class="btn primary full" type="submit">＋ Incluir participação</button>
+      </form>
+    </div>
+  </section>
   <section id="modal-add" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="add-title">
-    <header class="modal-header"><div><div class="eyebrow minor">UM NOVO TÍTULO PARA NOSSA HISTÓRIA</div><h2 id="add-title">Adicionar filme ou série</h2></div><button type="button" class="icon-button modal-close" title="Fechar" aria-label="Fechar">×</button></header>
+    <header class="modal-header"><div><div class="eyebrow minor">CADASTRO DE TÍTULOS</div><h2 id="add-title">Adicionar filme ou série</h2></div><button type="button" class="icon-button modal-close" title="Fechar" aria-label="Fechar">×</button></header>
     <div class="modal-body">
       <div class="tabs"><button type="button" id="tab-search" class="tab active">🔍 Buscar capa e informações</button><button type="button" id="tab-manual" class="tab">＋ Inserir manualmente</button></div>
       <div id="add-search-panel">
@@ -110,7 +121,7 @@
         <div class="field"><label for="manual-actors">Elenco principal (opcional)</label><input id="manual-actors" placeholder="Ex.: Actor A, Actriz B, Actor C"><small>Separe os nomes por vírgula para incluir no ranking de artistas.</small></div>
         <div class="field"><label for="manual-plot">Sinopse (opcional)</label><textarea id="manual-plot" rows="3" placeholder="Sobre o que é o filme?"></textarea></div>
         <div class="field"><label for="manual-notes">O que achamos dessa obra?</label><textarea id="manual-notes" rows="3" placeholder="Uma lembrança, opinião ou cena favorita..."></textarea></div>
-        <button type="submit" class="btn primary full">＋ Adicionar ao nosso ranking</button>
+        <button type="submit" class="btn primary full">＋ Adicionar ao catálogo</button>
       </form>
     </div>
   </section>
@@ -180,6 +191,6 @@
   </section>
 </div>
 <div id="toast" role="status" aria-live="polite" class="toast hidden"></div>
-<script src="/app.js?v=1.11" defer></script>
+<script src="/app.js?v=1.14" defer></script>
 </body>
 </html>

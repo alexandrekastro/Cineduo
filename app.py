@@ -785,21 +785,8 @@ def normalize_trailer_url(url):
     return 'https://www.youtube.com/watch?v=' + video_id
 
 
-SEED = [
-    (10, 'A Odisseia', 'The Odyssey', '2026', None),
-    (10, 'Michael', 'Michael', '2026', None),
-    (10, 'Avatar: Fogo e Cinzas', 'Avatar: Fire and Ash', '2025', None),
-    (9, 'Fratura', 'Fractured', '2019', None),
-    (9, 'Corra!', 'Get Out', '2017', 'tt5052448'),
-    (9, 'A Substância', 'The Substance', '2024', 'tt17526714'),
-    (8, 'O Diabo de Cada Dia', 'The Devil All the Time', '2020', 'tt7395114'),
-    (8, 'Efeito Borboleta', 'The Butterfly Effect', '2004', 'tt0289879'),
-    (8, 'Ainda Estou Aqui', "I'm Still Here", '2024', 'tt14961016'),
-    (8, 'Homem-Aranha: Um Novo Dia', 'Spider-Man: Brand New Day', '2026', None),
-    (8, '12 Horas para Sobreviver: O Ano da Eleição', 'The Purge: Election Year', '2016', 'tt4094724'),
-    (8, 'Invocação do Mal 2', 'The Conjuring 2', '2016', 'tt3065204'),
-    (8, 'Tropa de Elite', 'Elite Squad', '2007', 'tt0861739'),
-]
+# Instalações públicas começam vazias. Os dados do usuário são criados apenas no cadastro/importação.
+# Nunca incluir filmes pessoais ou credenciais como dados de exemplo automáticos.
 COLUMNS = {'title', 'original_title', 'year', 'personal_rating', 'notes', 'watched_on', 'favorite',
            'imdb_id', 'imdb_rating', 'metascore', 'rotten_tomatoes', 'runtime', 'genre', 'director',
            'actors', 'plot', 'poster', 'country', 'awards', 'language', 'box_office', 'trailer_url', 'content_type'}
@@ -885,15 +872,9 @@ def setup():
           movie_id INTEGER NOT NULL, artist_key TEXT NOT NULL, artist_name TEXT NOT NULL,
           PRIMARY KEY(movie_id,artist_key))''')
         db.execute('CREATE INDEX IF NOT EXISTS movies_score_order ON movies (personal_rating,sort_order)')
-        count = db.execute('SELECT COUNT(*) FROM movies').fetchone()[0]
-        seeded = db.execute("SELECT value FROM settings WHERE key='seeded'").fetchone()
-        if count == 0 and seeded is None:
-            for idx, (score,title,original,year,imdb_id) in enumerate(SEED):
-                db.execute('''INSERT INTO movies
-                (title,original_title,year,imdb_id,personal_rating,sort_order,created_at,updated_at)
-                VALUES (?,?,?,?,?,?,?,?)''',
-                (title,original,year,imdb_id,score,idx,now(),now()))
-            db.execute("INSERT INTO settings (key,value) VALUES ('seeded','yes')")
+        # Não cadastrar filmes automaticamente. Bancos existentes permanecem intactos.
+        # Marca a primeira inicialização para fins de compatibilidade com versões antigas.
+        db.execute("INSERT OR IGNORE INTO settings(key,value) VALUES ('seeded','disabled-v1.12')")
 
 
 def get_setting(key):
@@ -1574,7 +1555,7 @@ def main():
     host='0.0.0.0' if opts.network else '127.0.0.1'
     server=ThreadingHTTPServer((host,opts.port),Handler)
     link=f'http://127.0.0.1:{server.server_port}'
-    print('\n'+'='*55+'\n   CINEDUO  |  Nossa coleção de filmes\n'+'='*55)
+    print('\n'+'='*55+'\n   CINEDUO  |  Catálogo de filmes e séries\n'+'='*55)
     print(f'\n   Abra no computador: {link}')
     if opts.network:
         print('   No celular: http://IP-DO-COMPUTADOR:'+str(server.server_port))
