@@ -37,15 +37,10 @@ KNOWN_IMDB_IDS = {
     ('ainda estou aqui', '2024'): 'tt14961016',
     ('verity', '2026'): 'tt32261958',
 }
-OMDB_FIELDS = ('imdb_id','imdb_rating','metascore','rotten_tomatoes',
-               'runtime','genre','director','actors','plot','poster','country',
-               'awards','language','box_office','content_type')
-
+OMDB_FIELDS = ('imdb_id','imdb_rating','metascore','rotten_tomatoes', 'runtime','genre','director','actors','plot','poster','country', 'awards','language','box_office','content_type')
 
 def safe_title(value):
-    return ''.join(c for c in unicodedata.normalize('NFKD', str(value or '').lower())
-                   if not unicodedata.combining(c)).strip()
-
+    return ''.join(c for c in unicodedata.normalize('NFKD', str(value or '').lower()) if not unicodedata.combining(c)).strip()
 
 def imdb_id_from_input(value):
     """Permite tt... ou URL do IMDb, mas não outros endereços."""
@@ -57,14 +52,12 @@ def imdb_id_from_input(value):
     if url: return url.group(1).lower()
     raise ValueError('Informe o ID IMDb (tt...) ou o link da ficha no IMDb.')
 
-
 def movie_expected_id(item):
     title=safe_title(item.get('title'))
     year=str(item.get('year') or '')[:4]
     if title == 'ainda estou aqui' and year in ('2024','2025',''):
         return 'tt14961016'
     return KNOWN_IMDB_IDS.get((title,year)) or item.get('imdb_id') or ''
-
 
 def backup_before_v111():
     """Garante cópia antes das novas regras de crédito e cronologia."""
@@ -73,7 +66,6 @@ def backup_before_v111():
     output=folder/'antes-da-v1.11.sqlite3'
     if not output.exists():
         with sqlite3.connect(DB) as old,sqlite3.connect(output) as saved:old.backup(saved)
-
 
 def backup_before_v17():
     """Cópia única anterior à atualização de elenco e avatares."""
@@ -84,7 +76,6 @@ def backup_before_v17():
     if target.exists(): return
     with sqlite3.connect(DB) as source, sqlite3.connect(target) as replica:
         source.backup(replica)
-
 
 def cast_names(text):
     if isinstance(text,list):
@@ -104,7 +95,6 @@ def cast_names(text):
         seen.add(canonical)
     return names
 
-
 def external_json(url,timeout=6):
     """Consulta apenas os endpoints pré-definidos. Não recebe URLs arbitrárias do cliente."""
     req=Request(url,headers={
@@ -115,14 +105,12 @@ def external_json(url,timeout=6):
     if len(raw)>2*1024*1024: raise ValueError('Resposta externa muito grande.')
     return json.loads(raw.decode('utf-8'))
 
-
 def cinemeta_cast(imdb_id,kind):
     url=f'https://v3-cinemeta.strem.io/meta/{kind}/{imdb_id}.json'
     doc=external_json(url,timeout=7)
     meta=doc.get('meta') or {}
     if str(meta.get('id') or '').split(':')[0]!=imdb_id: return []
     return cast_names(meta.get('cast') or [])[:90]
-
 
 def wikidata_cast(imdb_id):
     query=('SELECT DISTINCT ?personLabel WHERE { '
@@ -133,10 +121,8 @@ def wikidata_cast(imdb_id):
     return cast_names([r.get('personLabel',{}).get('value') for r in
                        doc.get('results',{}).get('bindings',[]) if r.get('personLabel',{}).get('type')=='literal'])
 
-
 VOICE_ROLE_RE=re.compile(r'\b(?:voice|voiceover|voice-over|dubbing|dubbed|narration|narrator|archive\s+footage|stock\s+footage)\b',re.I)
 NON_ACTING_ROLE_RE=re.compile(r'^(?:self|himself|herself|themselves|musician|singer|band|soundtrack|performer|host|presenter)(?:\b|\s*\()',re.I)
-
 
 def is_on_screen_cast(person,kind='movie'):
     """Considera crédito de elenco (não equipe); dispensa apenas voz/arquivo e
@@ -151,7 +137,6 @@ def is_on_screen_cast(person,kind='movie'):
         if VOICE_ROLE_RE.search(value) or NON_ACTING_ROLE_RE.search(value.strip()):continue
         return True
     return False
-
 
 def tmdb_cast(imdb_id,kind):
     """Apenas pessoas na seção cast da TMDb, sem vozes nem equipe técnica.
@@ -178,7 +163,6 @@ def tmdb_cast(imdb_id,kind):
         if name and re.fullmatch(r'/[A-Za-z0-9_./-]{6,160}\.(?:jpg|jpeg|png)',path,re.I):
             images[safe_title(name)]='https://image.tmdb.org/t/p/w185'+path
     return names,images
-
 
 def enrich_movie_cast(movie_id):
     """Confirma atores em vez de juntar elencos parciais e créditos duvidosos.
@@ -217,7 +201,6 @@ def enrich_movie_cast(movie_id):
             'count':len(actors),'sources':['TMDb'],'verified':True,
             'note':'Créditos de atuação confirmados; vozes e equipe excluídos.'}
 
-
 # Retratos consultados nas páginas do Wikimedia Commons (links remotos, não baixados).
 # Crédito, autoria e licenças estão nas páginas de cada arquivo; consultáveis
 # em "Fonte da foto" no aplicativo. Só sugerimos nomes identificados com segurança.
@@ -230,14 +213,11 @@ CURATED_ACTOR_PHOTOS = {
     'anne hathaway': 'Anne Hathaway at Berlinale 2023 (close-up).jpg',
 }
 
-
 def commons_file_url(filename):
     return 'https://commons.wikimedia.org/wiki/Special:FilePath/' + quote(filename.replace(' ', '_'), safe='()') + '?width=320'
 
-
 def commons_source_url(filename):
     return 'https://commons.wikimedia.org/wiki/File:' + quote(filename.replace(' ', '_'), safe='()')
-
 
 def normalize_photo_url(value):
     value = str(value or '').strip()
@@ -253,7 +233,6 @@ def normalize_photo_url(value):
         return commons_file_url(unquote(filename))
     return value
 
-
 def set_actor_photo(name, photo_url):
     name = str(name or '').strip()
     if not name or len(name) > 100 or any(ch in name for ch in '<>{}\\'):
@@ -265,7 +244,6 @@ def set_actor_photo(name, photo_url):
                    'ON CONFLICT(artist_key) DO UPDATE SET url=excluded.url,checked_at=excluded.checked_at,source=excluded.source',
                    (key,url,str(time.time()),'manual' if url else 'retry'))
     return {'name':name,'url':url or None,'source':'manual' if url else 'retry'}
-
 
 def actor_photo(name):
     name=str(name or '').strip()
