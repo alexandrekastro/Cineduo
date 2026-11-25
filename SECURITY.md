@@ -1,19 +1,20 @@
-# Segurança e privacidade
+# Security and Privacy
 
-## Antes de tornar o repositório público
+## Before Making the Repository Public
 
-- **Não inclua `app_data/`**: ela guarda `cineduo.sqlite3`, capas em cache, backups e possivelmente chaves de API.
-- Nunca publique `.env`, capturas de tela que mostrem chaves, arquivos de backup e exportações do ranking pessoal.
-- O `.gitignore` impede a adição acidental de muitos desses arquivos, mas **não substitui a revisão do `git status` antes de cada commit**.
-- Se você já mostrou uma chave/token em uma captura de tela compartilhada, gere outra credencial no serviço e substitua a antiga no aplicativo.
-- Não execute o modo `--network` em redes públicas e não abra a porta 8765 no roteador para acesso pela internet.
+- Do not commit app_data/. This directory stores the cineduo.sqlite3 database, cached posters, backups, and potentially API keys.
+- Never publish .env files, screenshots containing API keys or tokens, backup files, or exports of your personal movie rankings.
+- The .gitignore file helps prevent accidental commits, but does not replace reviewing git status before every commit.
+- If an API key or token has been visible in a shared screenshot, revoke or regenerate the credential through its provider and update the application with the replacement.
+- Do not use the --network mode on untrusted or public networks, and do not expose port 8765 to the internet through your router.
 
-## Limitação atual de segurança
+## Current Security Limitations
 
-Este projeto usa um servidor HTTP local, sem autenticação. A opção de rede local `--network` permite acesso de outros dispositivos na mesma rede. **Não é adequado expor esse servidor diretamente na internet**.
+CineDuo currently runs on a local HTTP server without user authentication. The optional --network mode can allow other devices on the same local network to connect. This server must not be exposed directly to the public internet.
 
-Para hospedar o CineDuo de forma pública ou com acesso remoto privado, o projeto precisa de autenticação, autorização, proteção de rotas, estratégia de armazenamento segura e revisão de segurança.
+Before deploying CineDuo publicly or providing private remote access, the application will need authentication, authorization, route protection, secure credential and data storage, and a security review.
 
-## Caso uma credencial seja incluída em um commit público
+## If a Credential Is Committed to a Public Repository
 
-**Revogue/regenere a chave imediatamente.** Apagar o arquivo do último commit não remove a credencial do histórico Git. Siga a documentação oficial: https://docs.github.com/pt/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository
+**Revoke or rotate the exposed credential immediately.** Removing a file from the latest commit does not remove sensitive data from the Git history.
+See GitHub's guidance: Removing sensitive data from a repository.
