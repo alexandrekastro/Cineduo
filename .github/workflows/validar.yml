@@ -1,24 +1,26 @@
-name: Validar codigo
+name: Validate CineDuo
 
 on:
   push:
   pull_request:
 
 jobs:
-  verificar:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Obter codigo
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Configurar Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Validar sintaxe Python
-        run: python -m py_compile app.py
-      - name: Configurar Node para checagem de JS
+      - name: Compile all Python modules
+        run: python -m compileall -q app.py config
+      - name: Run backend smoke tests
+        run: python -m unittest discover -s tests -v
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validar sintaxe JavaScript
+      - name: Validate JavaScript syntax
         run: node --check app.js
